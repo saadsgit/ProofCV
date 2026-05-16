@@ -12,7 +12,7 @@ It lets trusted issuers such as student clubs, workshop organizers, universities
 
 **Network:** Monad Testnet
 
-**Smart Contract Address:** `PASTE_YOUR_CONTRACT_ADDRESS_HERE`
+**Smart Contract Address:** `0x243E0f85B8A9e8d7BE8D182B42C8f250D3d5B3c6`
 
 ---
 
