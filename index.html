@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProofCV | Verifiable Credentials on Monad</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+        linear-gradient(135deg, #f8fafc 0%, #eef2f7 48%, #dbeafe 100%);
+      color: #0f172a;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 34px 18px 44px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 46px 28px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 58%, #334155 100%);
+      color: white;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      margin-bottom: 24px;
+    }
+
+    .logo-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 34px;
+      border-radius: 999px;
+      background: rgba(219, 234, 254, 0.15);
+      color: #ffffff;
+      border: 1.5px solid rgba(219, 234, 254, 0.35);
+      box-shadow:
+        0 18px 45px rgba(37, 99, 235, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      font-size: clamp(38px, 6vw, 64px);
+      line-height: 1;
+      margin: 0 0 18px;
+      letter-spacing: -2px;
+    }
+
+    .hero p {
+      max-width: 790px;
+      margin: 0 auto;
+      color: #dbeafe;
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .stat {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
+    }
+
+    .stat strong {
+      display: block;
+      color: #1d4ed8;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: #475569;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .wallet-card {
+      text-align: center;
+      background: #ffffff;
+      border: 1px solid #dbe3ef;
+      border-radius: 24px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .wallet-card h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: #0f172a;
+    }
+
+    .hint {
+      text-align: center;
+      margin: 0 0 18px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #walletStatus {
+      margin: 12px auto 0;
+      max-width: 800px;
+      color: #475569;
+      font-size: 14px;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid #dbe3ef;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 16px 42px rgba(15, 23, 42, 0.08);
+    }
+
+    .card h2 {
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 23px;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+
+    label {
+      display: block;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 14px 0 6px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1.5px solid #cbd5e1;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 13px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: 0.2s ease;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      background: #ffffff;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 1.5px solid #1d4ed8;
+      background: #2563eb;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.18s ease;
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #1d4ed8;
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+    }
+
+    button.secondary {
+      background: white;
+      color: #1d4ed8;
+      border: 1.5px solid #93c5fd;
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: #eff6ff;
+      border-color: #2563eb;
+    }
+
+    button.danger {
+      background: #475569;
+      border-color: #334155;
+      box-shadow: 0 10px 22px rgba(71, 85, 105, 0.18);
+    }
+
+    button.danger:hover {
+      background: #334155;
+    }
+
+    pre {
+      margin-top: 16px;
+      background: #0f172a;
+      color: #dbeafe;
+      border: 1px solid rgba(147, 197, 253, 0.22);
+      border-radius: 18px;
+      padding: 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.55;
+      min-height: 100px;
+      font-size: 13px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 28px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .footer strong {
+      color: #1e3a8a;
+    }
+
+    @media (max-width: 850px) {
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding: 34px 20px;
+      }
+
+      .logo-pill {
+        padding: 12px 26px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1 class="logo-pill">ProofCV</h1>
+      <p>
+        A simple credential verification system for students, clubs, workshops, and hackathons.
+        Trusted issuers can publish tamper-proof resume credentials, while anyone can verify
+        whether a certificate is real, who issued it, and whether it has been revoked.
+      </p>
+    </section>
+
+    <section class="stats">
+      <div class="stat">
+        <strong>Public</strong>
+        <span>Anyone can verify</span>
+      </div>
+      <div class="stat">
+        <strong>Trusted</strong>
+        <span>Only approved issuers can issue</span>
+      </div>
+      <div class="stat">
+        <strong>Onchain</strong>
+        <span>Records live on Monad Testnet</span>
+      </div>
+    </section>
+
+    <section class="wallet-card">
+      <h2>Connect Wallet</h2>
+      <p class="hint">
+        Connect MetaMask only when issuing, revoking, or adding issuers. Verification works publicly.
+      </p>
+      <div class="button-row">
+        <button onclick="connectWallet()">Connect MetaMask</button>
+      </div>
+      <p id="walletStatus">Wallet not connected. Public verification is still available.</p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Verify Certificate</h2>
+        <p class="hint">Check if a credential is valid, revoked, or fake.</p>
+
+        <label for="verifyId">Certificate ID</label>
+        <input id="verifyId" placeholder="Example: 1" value="1" />
+
+        <div class="button-row">
+          <button onclick="verifyCertificate()">Verify Certificate</button>
+        </div>
+
+        <pre id="verifyResult">No verification yet.</pre>
+      </div>
+
+      <div class="card">
+        <h2>Issue Certificate</h2>
+        <p class="hint">Only approved issuer wallets can issue credentials.</p>
+
+        <label for="studentAddress">Student Wallet Address</label>
+        <input id="studentAddress" placeholder="0x..." />
+
+        <label for="certTitle">Certificate Title</label>
+        <input id="certTitle" value="Solidity Workshop Completion" />
+
+        <label for="certDescription">Description</label>
+        <textarea id="certDescription">Completed a verified ProofCV credential demo on Monad Testnet.</textarea>
+
+        <div class="button-row">
+          <button onclick="issueCertificate()">Issue Certificate</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Student Profile</h2>
+        <p class="hint">Look up all certificate IDs issued to a wallet.</p>
+
+        <label for="lookupStudent">Student Wallet Address</label>
+        <input id="lookupStudent" placeholder="0x..." />
+
+        <div class="button-row">
+          <button onclick="getStudentCertificates()">Get Certificates</button>
+        </div>
+
+        <pre id="studentCerts">No lookup yet.</pre>
+      </div>
+
+      <div class="card">
+        <h2>Revoke Certificate</h2>
+        <p class="hint">Issuer or admin can revoke a credential if it was issued by mistake.</p>
+
+        <label for="revokeId">Certificate ID</label>
+        <input id="revokeId" placeholder="Example: 1" />
+
+        <div class="button-row">
+          <button class="danger" onclick="revokeCertificate()">Revoke Certificate</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Add Trusted Issuer</h2>
+        <p class="hint">Admin-only action. Approve a club, workshop organizer, or institution wallet.</p>
+
+        <label for="issuerAddress">Issuer Wallet Address</label>
+        <input id="issuerAddress" placeholder="0x..." />
+
+        <label for="issuerName">Issuer Name</label>
+        <input id="issuerName" value="ABC Blockchain Club" />
+
+        <div class="button-row">
+          <button class="secondary" onclick="addIssuer()">Add Issuer</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <strong>ProofCV</strong> — verifiable resume credentials using Monad Testnet, MetaMask, and smart-contract access control.
+    </div>
+  </main>
+
+  <script>
+    const CONTRACT_ADDRESS = "0x243E0f85B8A9e8d7BE8D182B42C8f250D3d5B3c6";
+
+    const ABI = [
+      "function owner() view returns (address)",
+      "function addIssuer(address issuerAddress, string name)",
+      "function issueCertificate(address student, string title, string description) returns (uint256)",
+      "function revokeCertificate(uint256 certificateId)",
+      "function verifyCertificate(uint256 certificateId) view returns (bool exists, bool valid, address student, address issuer, string issuerName, string title, string description, uint256 issuedAt, bool revoked)",
+      "function getStudentCertificates(address student) view returns (uint256[])",
+      "function nextCertificateId() view returns (uint256)"
+    ];
+
+    let provider;
+    let signer;
+    let contract;
+    let currentAccount;
+
+    const readProvider = new ethers.JsonRpcProvider("https://testnet-rpc.monad.xyz");
+    const readContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, readProvider);
+
+    function requireContractAddress() {
+      if (CONTRACT_ADDRESS === "PASTE_YOUR_DEPLOYED_CONTRACT_ADDRESS_HERE") {
+        alert("Please replace CONTRACT_ADDRESS in index.html with your deployed ProofCV contract address.");
+        return false;
+      }
+      return true;
+    }
+
+    async function connectWallet() {
+      try {
+        if (!requireContractAddress()) return;
+
+        if (!window.ethereum) {
+          alert("MetaMask not found. Please install MetaMask.");
+          return;
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+
+        const network = await provider.getNetwork();
+
+        if (Number(network.chainId) !== 10143) {
+          alert("Please switch MetaMask to Monad Testnet. Chain ID should be 10143.");
+          return;
+        }
+
+        signer = await provider.getSigner();
+        currentAccount = await signer.getAddress();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        document.getElementById("walletStatus").innerText =
+          "Connected: " + currentAccount + " | Monad Testnet Chain ID: " + network.chainId;
+
+        document.getElementById("studentAddress").value = currentAccount;
+        document.getElementById("lookupStudent").value = currentAccount;
+      } catch (err) {
+        alert("Wallet connection failed: " + err.message);
+      }
+    }
+
+    function requireWalletContract() {
+      if (!contract) {
+        alert("Please connect MetaMask first.");
+        return false;
+      }
+      return true;
+    }
+
+    async function verifyCertificate() {
+      try {
+        if (!requireContractAddress()) return;
+
+        const id = document.getElementById("verifyId").value.trim();
+
+        if (!id) {
+          alert("Please enter a certificate ID.");
+          return;
+        }
+
+        const result = await readContract.verifyCertificate(id);
+
+        const exists = result[0];
+        const valid = result[1];
+        const student = result[2];
+        const issuer = result[3];
+        const issuerName = result[4];
+        const title = result[5];
+        const description = result[6];
+        const issuedAt = Number(result[7]);
+        const revoked = result[8];
+
+        if (!exists) {
+          document.getElementById("verifyResult").innerHTML =
+            "Status: INVALID\n\nThis certificate does not exist.";
+          return;
+        }
+
+        const date = new Date(issuedAt * 1000).toLocaleString();
+
+        document.getElementById("verifyResult").innerHTML =
+`Status: ${valid ? "VALID" : "INVALID / REVOKED"}
+
+Student:
+${student}
+
+Issuer:
+${issuer}
+
+Issuer Name:
+${issuerName}
+
+Title:
+${title}
+
+Description:
+${description}
+
+Issued At:
+${date}
+
+Revoked:
+${revoked}`;
+      } catch (err) {
+        alert("Verification failed: " + err.message);
+      }
+    }
+
+    async function issueCertificate() {
+      try {
+        if (!requireWalletContract()) return;
+
+        const student = document.getElementById("studentAddress").value.trim();
+        const title = document.getElementById("certTitle").value.trim();
+        const description = document.getElementById("certDescription").value.trim();
+
+        if (!student || !title || !description) {
+          alert("Please fill student address, title, and description.");
+          return;
+        }
+
+        const tx = await contract.issueCertificate(student, title, description);
+        alert("Issuing certificate. Please wait for confirmation...");
+        await tx.wait();
+
+        const nextId = await contract.nextCertificateId();
+        const latestId = Number(nextId) - 1;
+
+        document.getElementById("verifyId").value = latestId;
+        document.getElementById("revokeId").value = latestId;
+
+        alert("Certificate issued successfully. New certificate ID: " + latestId);
+      } catch (err) {
+        alert("Issue failed: " + err.message);
+      }
+    }
+
+    async function getStudentCertificates() {
+      try {
+        if (!requireContractAddress()) return;
+
+        const student = document.getElementById("lookupStudent").value.trim();
+
+        if (!student) {
+          alert("Please enter a student wallet address.");
+          return;
+        }
+
+        const ids = await readContract.getStudentCertificates(student);
+
+        document.getElementById("studentCerts").innerText =
+          ids.length === 0
+            ? "No certificates found for this wallet."
+            : "Certificate IDs: " + ids.map(id => id.toString()).join(", ");
+      } catch (err) {
+        alert("Lookup failed: " + err.message);
+      }
+    }
+
+    async function revokeCertificate() {
+      try {
+        if (!requireWalletContract()) return;
+
+        const id = document.getElementById("revokeId").value.trim();
+
+        if (!id) {
+          alert("Please enter a certificate ID to revoke.");
+          return;
+        }
+
+        const tx = await contract.revokeCertificate(id);
+        alert("Revoking certificate. Please wait for confirmation...");
+        await tx.wait();
+
+        alert("Certificate revoked successfully.");
+
+        document.getElementById("verifyId").value = id;
+        await verifyCertificate();
+      } catch (err) {
+        alert("Revoke failed: " + err.message);
+      }
+    }
+
+    async function addIssuer() {
+      try {
+        if (!requireWalletContract()) return;
+
+        const issuerAddress = document.getElementById("issuerAddress").value.trim();
+        const issuerName = document.getElementById("issuerName").value.trim();
+
+        if (!issuerAddress || !issuerName) {
+          alert("Please enter issuer address and issuer name.");
+          return;
+        }
+
+        const tx = await contract.addIssuer(issuerAddress, issuerName);
+        alert("Adding trusted issuer. Please wait for confirmation...");
+        await tx.wait();
+
+        alert("Trusted issuer added successfully.");
+      } catch (err) {
+        alert("Add issuer failed: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
